@@ -1,0 +1,102 @@
+#script:Abhi Sudarshana
+
+#Plotting principal components
+library(rgl)
+pca_low_high_grde_gbm <- prcomp(low_high_grde_expr_250[,-251], scale = TRUE)
+plot(comp_low_high_grde_gbm, col=as.factor(low_high_grde_expr_250[,251]), pch=16)
+comp_low_high_grde_gbm <- data.frame(pca_low_high_grde_gbm$x[,1:5])
+library(RColorBrewer)
+library(scales)
+plot(comp_low_high_grde_gbm$PC1, comp_low_high_grde_gbm$PC2, col=as.factor(low_high_grde_expr_250[,251]), pch=16)
+plot(comp_low_high_grde_gbm$PC1, comp_low_high_grde_gbm$PC3, col=as.factor(low_high_grde_expr_250[,251]), pch=16)
+plot(comp_low_high_grde_gbm$PC2, comp_low_high_grde_gbm$PC3, col=as.factor(low_high_grde_expr_250[,251]), pch=16)
+
+#Running PCA on a dataset
+library("FactoMineR")
+library("factoextra")
+library(ggplot2)
+#data <- regression_dataset_1_99
+#data.active <- data[,2:33]
+#need to subset variables (predictors) that are going to be used in PCA
+head(data.active)
+pca <- PCA(ex, scale.unit = TRUE, ncp = 5, graph = FALSE)
+print(pca)
+# extracting different info from PCA:
+#get_eigenvalue(pca): Extract the eigenvalues
+#fviz_eig(pca): Visualize eigenvalues
+#get_pca_ind(pca), get_pca_var(pca): Extract the results for individuals and variables
+#fviz_pca_ind(pca), fviz_pca_var(pca): Visualize the results individuals and variables
+#fviz_pca_biplot(pca): Plot of individuals and variables
+eig.val <- get_eigenvalue(pca)
+eig.val
+# The proportion of variation explained by each eigenvalue is in the 2nd column. 
+fviz_eig(pca_rnaseq_gbm_test, addlabels = TRUE, ylim = c(0, 55)) #you can adjust the axes parameters to view the graphs
+var <- get_pca_var(pca)
+var
+var$coord
+var$cos2
+var$cor
+var$contrib
+fviz_pca_var(pca, col.var = "black")
+#Positively correlated variables together, negatively corr. variables opposite of origin
+#Variables close to circumference are well represented by the dimensions (PCs)
+library("corrplot")
+corrplot(var$cos2, is.corr=FALSE)
+fviz_cos2(pca, choice = "var")
+corrplot(var$coord, is.corr=FALSE)
+corrplot(var$contrib, is.corr=FALSE)
+fviz_cos2(pca, choice = "var", axes = 1:2)
+fviz_cos2(pca, choice = "var", axes = 1:2, ylim = c(0, 1))
+fviz_cos2(pca, choice = "var", axes = 1:2, ylim = c(0, 100))
+# Color by cos2 values
+fviz_pca_var(pca, col.var = "cos2", gradient.cols = c("white", "blue", "orange"), repel = TRUE) 
+#top 10 variables contributing to PCs
+fviz_contrib(pca, choice = "var", axes = 1, top = 10)
+fviz_contrib(pca, choice = "var", axes = 2, top = 10)
+#Total contribution to PC1 and PC2
+fviz_contrib(pca_meth_gbm, choice = "var", axes = 1:2, top = 10)
+fviz_pca_var(pca, col.var = "contrib",gradient.cols = c("purple", "orange", "red"))
+#Random continuous variable of length 32 for the 32 CpGs (color by continuous variable)
+set.seed(1230)
+cont_var <- rnorm(nrow(top100_exp))
+fviz_pca_var(pca, col.var = cont_var, gradient.cols = c("purple", "orange", "red"),legend.title = "Cont_Var")
+#kmeans clustering
+# Create appropriate number of groups of variables (# of centers)
+set.seed(124003)
+km <- kmeans(var$coord, centers = 2, nstart = 25)
+grp <- as.factor(km$cluster)
+fviz_pca_var(pca, col.var = grp,geom = "point",palette = c("purple", "orange", "red","black"), legend.title = "Clustering")
+#data on individuals (reads)
+ind <- get_pca_ind(pca)
+ind
+ind$coord
+ind$cos2
+ind$contrib
+fviz_pca_ind(pca)
+fviz_pca_ind(pca, col.ind = "cos2", repel = TRUE) 
+#Similar reads grouped together 
+#Use data points sizes according to read cos2 values
+fviz_pca_ind(pca, pointsize = "cos2", pointshape = 21, fill = "red", repel = TRUE) 
+#Point sizes and color by cos2
+fviz_pca_ind(pca, col.ind = "cos2", pointsize = "cos2", gradient.cols = c("purple", "green", "red"), repel = TRUE)
+#bar plot of cos2 of individuals (reads)
+fviz_cos2(pca, choice = "ind")
+#top 10 contributing individuals (reads)
+fviz_cos2(pca, choice = "ind", top = 10)
+# Total contribution to PC1 and PC2
+fviz_contrib(pca, choice = "ind", axes = 1:2)
+fviz_contrib(pca, choice = "ind", axes = 1:2, ylim = c(0,15), top = 30)
+#color by continuous variable (same length as # of individuals (reads) in PCA)
+set.seed(12453)
+my_cont_var <- rnorm(10000000)
+fviz_pca_ind(pca, col.ind = my_cont_var, legend.title = "Cont_Var")
+#color by nascency column in dataset (use title of column for nascency values); 1 (nascent) or 2 (non-nascent) 
+fviz_pca_ind(pca, col.ind = as.factor(smples$class), legend.title = "Cont_Var", geom = "point")
+# Add confidence ellipses (optional)
+data$nascency <- as.factor(data$nascency)
+fviz_pca_ind(pca, geom.ind = "point", col.ind = as.factor(smples$class), addEllipses = TRUE, ellipse.type = "confidence", legend.title = "cancer type")
+#Simultaneously save all plots that were created   
+plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE)
+plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
+file.copy(from=plots.png.paths, to="C:/Users/Abhi/Documents/pinebiotech_project/plots") # input a path to a folder on your computer to save all the plots
+
