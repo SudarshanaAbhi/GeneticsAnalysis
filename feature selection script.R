@@ -1,0 +1,13 @@
+set.seed(57985)
+library(mlbench)
+library(caret)
+library(Hmisc)
+library(randomForest)
+#correlation
+corrmat_gbm_sarc <- cor(rnaseq_gbm_sarc_fin[,-7982])
+highcorr_gbm_sarc <- findCorrelation(corrmat_gbm_sarc, cutoff=0.80)
+#rfe
+control_prim_rec <- rfeControl(functions=rfFuncs, method="cv", number=10)
+results_prim_rec <- rfe(prim_rec_expr_top[,-70], as.factor(as.matrix(prim_rec_expr_top[,70])), sizes=c(1:25), rfeControl=control_prim_rec)
+predictors(results_prim_rec)
+plot(results_prim_rec)
