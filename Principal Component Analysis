@@ -99,4 +99,3 @@ fviz_pca_ind(pca, geom.ind = "point", col.ind = as.factor(smples$class), addElli
 plots.dir.path <- list.files(tempdir(), pattern="rs-graphics", full.names = TRUE)
 plots.png.paths <- list.files(plots.dir.path, pattern=".png", full.names = TRUE)
 file.copy(from=plots.png.paths, to="C:/Users/Abhi/Documents/pinebiotech_project/plots") # input a path to a folder on your computer to save all the plots
-
