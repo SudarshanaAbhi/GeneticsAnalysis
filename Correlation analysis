@@ -1,4 +1,4 @@
-#Script: Abhi Sudarshana
+#Script adopted from sthda 
 
 data.active <- data.frame(data.active) # data should consist of columns that you want to find the correlations between
 cormat <- round(cor(data.active),2)
